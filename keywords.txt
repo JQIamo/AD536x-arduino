@@ -1,0 +1,20 @@
+#############################
+#### Syntax Coloring Map ####
+#############################
+
+
+# Datatypes (KEYWORD1)
+
+
+AD5360	KEYWORD1
+
+
+# Methods/Functions/Instances  (KEYWORD2)
+
+
+doSomething	KEYWORD2
+
+
+# Constants (LITERAL1)
+
+
