@@ -24,8 +24,8 @@
 */
 
 // ensure this library description is only included once
-#ifndef Test_h
-#define Test_h
+#ifndef AD536x_h
+#define AD536x_h
 
 // include types & constants of Wiring core API
 #include "Arduino.h"

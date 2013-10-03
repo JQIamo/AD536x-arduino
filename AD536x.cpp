@@ -22,7 +22,7 @@
 #include "Arduino.h"
 
 // include this library's header
-#include "Test.h"
+#include "AD536x.h"
 
 // additional header files if used
 
