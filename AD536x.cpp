@@ -38,33 +38,34 @@
 
 
 
-
-AD536x::AD536x(int CS, int CLR, int LDAC, int RESET)
+// constructor...
+AD536x::AD536x(int cs, int clr, int ldac, int reset)
 {
 
-	_sync = CS;
-	_clr = CLR;
-	_ldac = LDAC;
-	_reset = RESET;
-  /*not really sure what to put here
-  It should be possibile to call the initialization of the SPI port by uncommenting the followingrow */
-
-//initialize_SPI(void);
-
-/*
-AD536x::initialize_SPI(void)
-{
-
-//First let us chose the channel	
-	SPI.begin(SPI_DEVICE);
-	//Initialize the bus for a device on pin SPI_DEVICE
-	SPI.setClockDivider(SPI_DEVICE,AD536x_CLOCK_DIVIDER_WR);
-	SPI.setDataMode(SPI_DEVICE,SPI_MODE1);// this setting needs to be double checked.
-	//Set between little endian and big endian notation
-	SPI.setBitOrder(SPI_DEVICE, MSBFIRST);
+	_sync = cs;
+	_clr = clr;
+	_ldac = ldac;
+	_reset = reset;
 	
-}
-*/
+	// make pins output, and initialize to startup state
+	pinMode(_sync, OUTPUT);
+	pinMode(_clr, OUTPUT);
+	pinMode(_ldac, OUTPUT);
+	pinMode(_reset, OUTPUT);
+	
+	digitalWrite(_sync, HIGH);
+	digitalWrite(_ldac, HIGH);
+	digitalWrite(_clr, HIGH);
+	digitalWrite(_reset, HIGH);
+	
+	AD536x::reset();
+	
+	SPI.begin();
+	
+	// want to do this better long-term; AD536x can handle 50MHz clock though.
+	SPI.setClockDivider(SPI_CLOCK_DIV2);
+    SPI.setBitOrder(MSBFIRST);
+  	SPI.setDataMode(SPI_MODE0);
 
 }
 

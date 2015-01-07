@@ -161,7 +161,11 @@ class AD536x
   // user-accessible "public" interface
   public:
   	
-  	AD536x(int CS, int CLR, int LDAC, int RESET);
+  	//! Constructor for AD536x object.
+  	/*!
+  		takes as arguments pin assignments for CS, CLR, LDAC, and RESET pins.
+  	*/
+  	AD536x(int cs, int clr, int ldac, int reset);
   	
   	//! Write 16-bit tuning word to DAC, and update output
   	/*!
