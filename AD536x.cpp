@@ -1,6 +1,11 @@
 /*
-   AD536x.cpp - AD536x family DAC control library 
+   AD536x.cpp - AD536x family DAC control library for Arduino.
+   
+   Should work with Analog devices AD5360, AD5361, AD5362, AD5363, 
+   and possibly others.
+   
    Created by Alessandro Restelli, 2013
+   Re-written by Neal Pisenti, 2015
    JQI - Joint Quantum Institute
 
    This program is free software: you can redistribute it and/or modify
@@ -18,16 +23,7 @@
 
 */
 
-// include core Arduino API
-#include "Arduino.h"
-
-// include this library's header
 #include "AD536x.h"
-
-// additional header files if used
-
-//The AD536x uses SPI interface
-#include "SPI.h"
 
 // Constructor
 // some parameters related to the particular hardware implementation
@@ -43,27 +39,19 @@
 
 
 
-
-AD536x::AD536x(void)
+AD536x::AD536x(int CS, int CLR, int LDAC, int RESET)
 {
+
+	_sync = CS;
+	_clr = CLR;
+	_ldac = LDAC;
+	_reset = RESET;
   /*not really sure what to put here
   It should be possibile to call the initialization of the SPI port by uncommenting the followingrow */
 
 //initialize_SPI(void);
 
-	
-	
-	
-}
-
-
-
-
-
-
-// Public Methods
-// Function used by this sketch and external sketches 
-
+/*
 AD536x::initialize_SPI(void)
 {
 
@@ -73,32 +61,244 @@ AD536x::initialize_SPI(void)
 	SPI.setClockDivider(SPI_DEVICE,AD536x_CLOCK_DIVIDER_WR);
 	SPI.setDataMode(SPI_DEVICE,SPI_MODE1);// this setting needs to be double checked.
 	//Set between little endian and big endian notation
-	SPI.setBitOrder(SPI_DEVICE,MSBFIRST);
+	SPI.setBitOrder(SPI_DEVICE, MSBFIRST);
 	
+}
+*/
+
+}
+
+
+// Public Methods
+/*********************************************/
+
+
+/**************************
+		DAC funcs
+***************************/
+void AD536x::writeDAC(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data){
+	AD536x::write(DAC, bank, ch, data);
+	AD536x::IOUpdate();	
+}
+
+void AD536x::writeDACHold(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data){
+	AD536x::write(DAC, bank, ch, data);
+}
+
+unsigned int AD536x::readDAC(AD536x_bank_t bank, AD536x_ch_t ch){
+	return _dac[bank][ch];
+}
+
+
+/**************************
+		Offset funcs
+***************************/
+void AD536x::writeOffset(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data){
+	AD536x::write(OFFSET, bank, ch, data);
+	AD536x::IOUpdate();
+}
+
+unsigned int AD536x::readOffset(AD536x_bank_t bank, AD536x_ch_t ch){
+	return _offset[bank][ch];
+}
+
+
+/**************************
+		Gain funcs
+***************************/
+void AD536x::writeGain(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data){
+	AD536x::write(OFFSET, bank, ch, data);
+	AD536x::IOUpdate();
+}
+
+unsigned int AD536x::readGain(AD536x_bank_t bank, AD536x_ch_t ch){
+	return _gain[bank][ch];
 }
 
 
 
-void AD536x::write(void)
-{
+/**************************
+		Misc funcs
+***************************/
+void AD536x::IOUpdate(){
+	digitalWrite(_ldac, LOW);
+	// delay(1);
+	digitalWrite(_ldac, HIGH);
+}
 
+void AD536x::reset(){
+	digitalWrite(_reset, LOW);
+	//delay(1);
+	digitalWrite(_reset, HIGH);
 	
+	// reset DAC, OFFSET, GAIN to default values
+	for (int c = 0; c < AD536x_MAX_CHANNELS; c++){
+		_dac[0][c] = AD536x_DEFAULT_DAC;
+		_dac[1][c] = AD536x_DEFAULT_DAC;
+		
+		_offset[0][c] = AD536x_DEFAULT_OFFSET;
+		_offset[1][c] = AD536x_DEFAULT_OFFSET;
+		
+		_gain[0][c] = AD536x_DEFAULT_GAIN;
+		_gain[1][c] = AD536x_DEFAULT_GAIN;
+		
+		_globalOffset[0] = AD536x_DEFAULT_GLOBALOFFSET;
+		_globalOffset[1] = AD536x_DEFAULT_GLOBALOFFSET;
+	}
+}
+
+void AD536x::assertClear(int state){
+	switch (state){
+		case 1:
+			digitalWrite(_clr, HIGH);
+			break;
+		case 0:
+			digitalWrite(_clr, LOW);
+			break;
+		default:
+			break;
+	}
+}
+
+void AD536x::writeGlobalOffset(AD536x_bank_t bank, unsigned int data){
 	
+	unsigned long cmd = 0;
+	data = data && 0x3FFF; 	// 14-bit mask
+	switch (bank) {
+		case BANK0:
+			cmd = (cmd | AD536x_WRITE_OFS0 | data);
+			_globalOffset[0] = data;
+			break;
+		case BANK1:
+			cmd = (cmd | AD536x_WRITE_OFS1 | data);
+			_globalOffset[1] = data;
+			break;
+		default:
+			// bad bank; return early
+			return;
+	}
+			
+	
+	// assert clear while adjusting range to avoid glitches, see datasheet
+	AD536x::assertClear(0);
+	AD536x::writeCommand(cmd);
+	AD536x::assertClear(1);
+
 }
 
 
-void AD53x::setVoltageWord(int bank, int channel, unsigned int voltageWord)
-{
-    unsigned long int command = (AD536x_WRITE_DAC | AD536x_BANK(bank) | AD536x_CHANNEL(channel) | voltageWord);
-    //AD536x::write(command);
+
+void AD536x::writeCommand(unsigned long cmd){
+
+	digitalWrite(_sync, LOW);
+
+	// write MSBFIRST
+	SPI.transfer((cmd >> 16) && 0xFF);
+	SPI.transfer((cmd >> 8) && 0xFF);
+	SPI.transfer(cmd && 0xFF);
+	
+	digitalWrite(_sync, HIGH);
 }
+
 
 
 // Private Methods
-// Functions used only in this library and not accessibile outside. 
+/*********************************************/
 
-//void AD536x::function(void)
-{
-  
+
+void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data){
+
+	data = data && AD536x_DATA_MASK; 	// bitmask ensure data has proper 
+									 	// resolution
+	// pointer for where to store channel data 
+	// for reference.
+	// see: http://stackoverflow.com/questions/21488179/c-how-to-declare-pointer-to-2d-array
+	unsigned int  (*localData)[2][AD536x_MAX_CHANNELS]; 	
+								
+	
+	unsigned long cmd = 0;		// var for building command.
+
+	
+	// add register header M1, M0	
+	switch (reg) {
+		case DAC:
+			cmd = cmd | AD536x_WRITE_DAC;
+			localData = &_dac;
+			break;
+		case OFFSET:
+			cmd = cmd | AD536x_WRITE_OFFSET;
+			localData = &_offset;
+			break;
+		case GAIN:
+			cmd = cmd | AD536x_WRITE_GAIN;
+			localData = &_gain;
+			break;
+		default:
+			// bad register; return early.
+			// might want to notify user...???
+			return;
+	}
+
+
+	// check to make sure channel in range, if not, return early.
+	if (ch > AD536x_MAX_CHANNELS && ch != CHALL){
+		return;
+	}
+	
+	if (ch == CHALL){
+		// if writing all channels, figure out which bank to address
+		// and update local reference data.
+		switch (bank){
+			case BANK0:
+				cmd = cmd | AD536x_ALL_BANK0;
+				for (int c = 0; c < AD536x_MAX_CHANNELS; c++){
+					(*localData)[0][c] = data;
+				}
+				break;
+			
+			case BANK1:
+				cmd = cmd | AD536x_ALL_BANK1;
+				for (int c = 0; c < AD536x_MAX_CHANNELS; c++){
+					(*localData)[0][c] = data;
+				}
+				break;
+			
+			case BANKALL:
+				// all banks, all channels
+				// address bits are zero, so do nothing to cmd.
+			    for (int c = 0; c < AD536x_MAX_CHANNELS; c++){
+					(*localData)[0][c] = data;
+					(*localData)[1][c] = data;
+				}
+				break;
+				
+			default:
+				// not valid address, so return early
+				return;
+		}
+	} else {
+		
+		// else, write particular bank/channel
+		switch (bank){
+			case BANK0:
+				cmd = cmd | AD536x_BANK0 | (ch << 16);
+				(*localData)[0][ch] = data;
+				break;
+			
+			case BANK1:
+				cmd = cmd | AD536x_BANK1 | (ch << 16);
+				(*localData)[1][ch] = data;
+				break;
+			
+			default:
+				// not valid address
+				// return early
+				return;
+		}
+	}
+
+	// update command with data packet, and write to dac.
+	cmd = cmd | data;
+	AD536x::writeCommand(cmd);
+
 }
-
