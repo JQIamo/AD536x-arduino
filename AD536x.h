@@ -356,8 +356,21 @@ class AD536x
   		
   	*/
 	void write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data);
-    
-
+	
+	//! Calculate a DAC tuning word based on desired voltage.
+	/*!
+		Uses the transfer function (in reverse):
+		
+		VOUT = 4*VREF*(DAC_CODE/2^16 - OFFSET_CODE/2^14)
+  		DAC_CODE = data*(M+1)/2^16 + (C - 2^15)
+  		
+  		
+  		
+  		See: writeDAC, writeOffset, writeGain
+	*/
+	unsigned int voltageToDAC(AD536x_bank_t bank, AD536x_ch_t ch, double voltage);
+  
+  
 };
 
 #endif

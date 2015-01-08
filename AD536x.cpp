@@ -90,6 +90,13 @@ unsigned int AD536x::readDAC(AD536x_bank_t bank, AD536x_ch_t ch){
 	return _dac[bank][ch];
 }
 
+void AD536x::setVoltage(AD536x_bank_t bank, AD536x_ch_t ch, double voltage){
+	
+}
+
+void AD536x::setVoltageHold(AD536x_bank_t bank, AD536x_ch_t ch, double voltage){
+
+}
 
 /**************************
 		Offset funcs
@@ -297,9 +304,31 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 				return;
 		}
 	}
+	
 
 	// update command with data packet, and write to dac.
 	cmd = cmd | data;
 	AD536x::writeCommand(cmd);
+}
+
+//fix...
+unsigned int AD536x::voltageToDAC(AD536x_bank_t bank, AD536x_ch_t ch, double voltage){
+	  
+	/* 	
+		Transfer function:	
+		VOUT = 4*VREF*(DAC_CODE/2^16 - OFFSET_CODE/2^14)
+  		DAC_CODE = data*(M+1)/2^16 + (C - 2^15)
+  	*/
+  	/*
+    double m = _gain[bank][ch]/(2.0^16);
+    double c = _offset[bank][ch];
+	double offset = _globalOffset[bank];
+	
+	unsigned int dac_code;
+	
+	//dac_code = (unsigned int)(voltage/(4*_vref[bank])
+	*/
+	return 0;
 
 }
+
