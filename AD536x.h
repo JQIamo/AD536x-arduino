@@ -28,6 +28,9 @@
 
 */
 
+
+
+
 // ensure this library description is only included once
 #ifndef AD536x_h
 #define AD536x_h
@@ -36,17 +39,113 @@
 #include "Arduino.h"
 #include "SPI.h"
 
-// put these in if-then statements for given DAC type...
-#define AD536x_MAX_CHANNELS 4
-#define AD536x_RESOLUTION 16
-#define AD536x_DATA_MASK 0xFFFF
-#define AD536x_CH_MASK 0x03	// or 0x07 for 8 ch/bank
 
-// note especially, these are different for 16/14-bit versions.
-#define AD536x_DEFAULT_DAC 0x8000
-#define AD536x_DEFAULT_OFFSET 0x8000
-#define AD536x_DEFAULT_GAIN 0xFFFF
-#define AD536x_DEFAULT_GLOBALOFFSET 0x2000
+	// note, in 2x banks
+	#define AD536x_MAX_CHANNELS 4
+	#define AD536x_RESOLUTION 16
+	#define AD536x_DATA_MASK 0xFFFF
+	#define AD536x_CH_MASK 0x03	
+	
+	#define AD536x_DEFAULT_DAC 0x8000
+	#define AD536x_DEFAULT_OFFSET 0x8000
+	#define AD536x_DEFAULT_GAIN 0xFFFF
+	#define AD536x_DEFAULT_GLOBALOFFSET 0x2000
+	
+	#define AD536x_DEFAULT_MAX 0xFFFF
+	#define AD536x_DEFAULT_MIN 0x0000
+
+
+/*
+// User must define a dac type before including AD536x library.
+#ifndef AD536x_MODEL
+//! Pre-processor macro defining AD536x type.
+/*!
+	AD5360: 16ch, 16bit
+	AD5361: 16ch, 14bit
+	AD5362: 8ch, 16bit
+	AD5363: 8ch, 14bit
+	
+	Defaults to AD5362, since that was what I prototyped with :P
+	
+	In your sketch, include a line like:
+	
+	    #define AD536x_MODEL 0	// AD5360
+	
+	before calling `#include "AD536x.h"` to select which chip version you have.
+*/
+/*
+#define AD536x_MODEL 2	// Defaults to AD5362
+#endif
+
+//! AD5360 DAC
+#if AD536x_MODEL == 0
+	// note, in 2x banks
+	#define AD536x_MAX_CHANNELS 8
+	#define AD536x_RESOLUTION 16
+	#define AD536x_DATA_MASK 0xFFFF
+	#define AD536x_CH_MASK 0x07
+	
+	#define AD536x_DEFAULT_DAC 0x8000
+	#define AD536x_DEFAULT_OFFSET 0x8000
+	#define AD536x_DEFAULT_GAIN 0xFFFF
+	#define AD536x_DEFAULT_GLOBALOFFSET 0x2000
+	
+	#define AD536x_DEFAULT_MAX 0xFFFF
+	#define AD536x_DEFAULT_MIN 0x0000
+#endif
+
+//! AD5361 DAC
+#if AD536x_MODEL == 1
+	// note, in 2x banks
+	#define AD536x_MAX_CHANNELS 8
+	#define AD536x_RESOLUTION 14
+	#define AD536x_DATA_MASK 0x3FFF
+	#define AD536x_CH_MASK 0x07
+	
+	#define AD536x_DEFAULT_DAC 0x2000
+	#define AD536x_DEFAULT_OFFSET 0x2000
+	#define AD536x_DEFAULT_GAIN 0x3FFF
+	#define AD536x_DEFAULT_GLOBALOFFSET 0x2000
+	
+	#define AD536x_DEFAULT_MAX 0x3FFF
+	#define AD536x_DEFAULT_MIN 0x0000
+#endif
+
+//! AD5362 DAC
+#if AD536x_MODEL == 2
+	// note, in 2x banks
+	#define AD536x_MAX_CHANNELS 4
+	#define AD536x_RESOLUTION 16
+	#define AD536x_DATA_MASK 0xFFFF
+	#define AD536x_CH_MASK 0x03	
+	
+	#define AD536x_DEFAULT_DAC 0x8000
+	#define AD536x_DEFAULT_OFFSET 0x8000
+	#define AD536x_DEFAULT_GAIN 0xFFFF
+	#define AD536x_DEFAULT_GLOBALOFFSET 0x2000
+	
+	#define AD536x_DEFAULT_MAX 0xFFFF
+	#define AD536x_DEFAULT_MIN 0x0000
+#endif
+
+//! AD5363 DAC
+#if AD536x_MODEL == 3
+	// note, in 2x banks
+	#define AD536x_MAX_CHANNELS 4
+	#define AD536x_RESOLUTION 14
+	#define AD536x_DATA_MASK 0x3FFF
+	#define AD536x_CH_MASK 0x03
+	
+	#define AD536x_DEFAULT_DAC 0x2000
+	#define AD536x_DEFAULT_OFFSET 0x2000
+	#define AD536x_DEFAULT_GAIN 0x3FFF
+	#define AD536x_DEFAULT_GLOBALOFFSET 0x2000
+	
+	#define AD536x_DEFAULT_MAX 0x3FFF
+	#define AD536x_DEFAULT_MIN 0x0000
+#endif
+
+*/
 
 
 //Definition of constants and AD536x registers
@@ -123,7 +222,10 @@ M1	M0	A5	A4	A3	A2	A1	A0	D15	D14	D13	D12	D11 D10 D9	D8	D7	D6	D5	D4	D3	D2	D1(0)	D0
 #define AD536x_WRITE_OFS1 3UL << 16 //Writes in the OFFSET 1 ANALOG DAC. the data is a 14 bit variable
 
 
-// these all might be wrong..... check bit shifts before using!!
+/***********************************************
+ these all might be wrong..... check bit shifts before using!!
+************************************************/
+/*
 #define AD536x_READ_REG 5UL << 15 //Select which register to read
 	//This is the set of commends that select a particular register
 	#define AD536x_READ_X1A(channel) 0|(channel+8)<<6
@@ -139,17 +241,25 @@ M1	M0	A5	A4	A3	A2	A1	A0	D15	D14	D13	D12	D11 D10 D9	D8	D7	D6	D5	D4	D3	D2	D1(0)	D0
 	#define AD536x_READ_OFS1 (3UL << 12)|(3UL << 6)							 
 	#define AD536x_READ_AB_0 (3UL << 12)|(6UL << 6)
 	#define AD536x_READ_AB_1 (3UL << 12)|(7UL << 6)	 
-	#define AD536x_READ_GPIO (3UL << 12)|(11UL << 6) //F6 to F0 SHOULD be 0
-#define AD536x_WR_AB_SELECT_0 6UL << 15 //F7 to F0 select registers X2A or X2B for bank 0 A is0 and B is 1
-#define AD536x_WR_AB_SELECT_0 11UL << 15 //F7 to F0 select registers X2A or X2B for bank 0 A is0 and B is 1
-#define AD536x_BLOCK_WR_AB_SELECT 19UL << 15 //Block write AB
-#define AD536x_MON 			12UL << 15 //Additional monitor commands specified below
+	#define AD536x_READ_GPIO (3UL << 12)|(11UL << 6) // F6 to F0 SHOULD be 0
+
+// F7 to F0 select registers X2A or X2B for bank 0 A is0 and B is 1
+#define AD536x_WRITE_AB_SELECT_0 6UL << 15 
+#define AD536x_WRITE_AB_SELECT_0 11UL << 15 // F7 to F0 select registers X2A or X2B for bank 0 A is0 and B is 1
+#define AD536x_BLOCK_WRITE_AB_SELECT 19UL << 15 // Block write AB
+#define AD536x_MON 	12UL << 15 // Additional monitor commands specified below
 	#define AD536x_CMD_MON_ENABLE 1UL << 4
 	#define AD536x_CMD_MON_DISABLE 1UL << 4
-	#define AD536x_CMD_MON_IN_PIN_SEL(pin) (1UL << 4)|pin // pin can be 0 or 1 and selects the input pin from MON_IN0 or MON_IN1								 
-	#define AD536x_CMD_MON_DAC_CH_SEL(channel) channel // F3:F0 selects the input channel. If a number greater than 15 is used will cause errors!
-#define	AD536x_WR_GPIO 13UL << 15 //F1=1 sets the GPIO as output F1=0 sets GPIO as input F0 contains the status.
+	
+	// pin can be 0 or 1 and selects the input pin from MON_IN0 or MON_IN1			
+	#define AD536x_CMD_MON_IN_PIN_SEL(pin) (1UL << 4)|pin 					 
+	
+	// F3:F0 selects the input channel. If a number greater than 15 is used will cause errors!
+	#define AD536x_CMD_MON_DAC_CH_SEL(channel) channel 
 
+// F1=1 sets the GPIO as output F1=0 sets GPIO as input F0 contains the status.
+#define	AD536x_WRITE_GPIO 13UL << 15 
+*/
 
 // register types
 enum AD536x_reg_t { DAC, OFFSET, GAIN };
@@ -164,8 +274,8 @@ enum AD536x_ch_t { CH0, CH1, CH2, CH3, CH4, CH5, CH6, CH7, CHALL };
 // library interface description
 class AD536x
 {
-  // user-accessible "public" interface
-  public:
+
+	public:
   	
   	//! Constructor for AD536x object.
   	/*!
@@ -202,16 +312,16 @@ class AD536x
     void writeDACHold(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data);
 
 
-	//! Read DAC value
+	//! Get DAC value
 	/*!
 		bank: BANK0, BANK1, or BANKALL
   		ch: CH0 .. CH7 (or .. CH3), or CHALL for all channels.
   		
-  		Reads locally stored DAC value for given channel.
+  		Gets locally stored DAC value for given channel.
   		
   		See: writeDAC
 	*/
-    unsigned int readDAC(AD536x_bank_t bank, AD536x_ch_t ch);
+    unsigned int getDAC(AD536x_bank_t bank, AD536x_ch_t ch);
     
 
 	//! Write Offset trim value
@@ -220,19 +330,19 @@ class AD536x
   		ch: CH0 .. CH7 (or .. CH3), or CHALL for all channels.
   		data: unsigned int data payload. See datasheet for details.
   		
-  		See: readOffset
+  		See: getOffset
 	*/	
 	void writeOffset(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data);
 
 
-	//! Read Offset trim value.
+	//! Get Offset trim value.
 	/*! 
 		bank: BANK0, BANK1, or BANKALL
   		ch: CH0 .. CH7 (or .. CH3), or CHALL for all channels. 
 		
 		See: writeOffset
 	*/
-	unsigned int readOffset(AD536x_bank_t bank, AD536x_ch_t ch);
+	unsigned int getOffset(AD536x_bank_t bank, AD536x_ch_t ch);
 	
 		
 	//! Write Gain trim value
@@ -241,22 +351,20 @@ class AD536x
   		ch: CH0 .. CH7 (or .. CH3), or CHALL for all channels.
   		data: unsigned int data payload. See datasheet for details.
   		
-  		See: readGain
+  		See: getGain
 	*/	
 	void writeGain(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data);
 
 
-	//! Read gain trim value.
+	//! Get gain trim value.
 	/*! 
 		bank: BANK0, BANK1, or BANKALL
   		ch: CH0 .. CH7 (or .. CH3), or CHALL for all channels.
 		
 		See: writeGain
 	*/
-	unsigned int readGain(AD536x_bank_t bank, AD536x_ch_t ch);
+	unsigned int getGain(AD536x_bank_t bank, AD536x_ch_t ch);
 	
-	
-
     
 	//! Write a particular voltage to DAC, and update output.
 	/*!
@@ -286,6 +394,61 @@ class AD536x
 	void setVoltageHold(AD536x_bank_t bank, AD536x_ch_t ch, double voltage);
 
 
+	//! Set maximum DAC tuning word allowable
+	/*!
+		bank: BANK0, BANK1, or BANKALL
+  		ch: CH0 .. CH7 (or .. CH3), or CHALL for all channels.
+  		data: DAC tuning word
+  		
+  		This function sets an internal (software) limit on the max voltage
+  		commanded by the DAC.
+  		
+  		See: writeDAC, setMinDAC
+	*/
+	void setMaxDAC(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data);
+	
+	
+	//! Set minimum DAC tuning word allowable
+	/*!
+		bank: BANK0, BANK1, or BANKALL
+  		ch: CH0 .. CH7 (or .. CH3), or CHALL for all channels.
+  		data: DAC tuning word
+  		
+  		This function sets an internal (software) limit on the min voltage
+  		commanded by the DAC.
+  		
+  		See: writeDAC, setMaxDAC
+	*/
+	void setMinDAC(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data);
+
+
+	//! Set maximum DAC voltage allowable
+	/*!
+		bank: BANK0, BANK1, or BANKALL
+  		ch: CH0 .. CH7 (or .. CH3), or CHALL for all channels.
+  		voltage: double-precision voltage value.
+  		
+  		This function sets an internal (software) limit on the max voltage
+  		commanded by the DAC.
+  		
+  		See: setVoltage, setMinVoltage
+	*/
+	void setMaxVoltage(AD536x_bank_t bank, AD536x_ch_t ch, double voltage);
+	
+	
+	//! Set minimum DAC voltage allowable
+	/*!
+		bank: BANK0, BANK1, or BANKALL
+  		ch: CH0 .. CH7 (or .. CH3), or CHALL for all channels.
+  		voltage: double-precision voltage value.
+  		
+  		This function sets an internal (software) limit on the min voltage
+  		commanded by the DAC.
+  		
+  		See: setVoltage, setMaxVoltage
+	*/
+	void setMinVoltage(AD536x_bank_t bank, AD536x_ch_t ch, double voltage);
+	
 
 	
     //! Issue an IO update
@@ -296,6 +459,11 @@ class AD536x
 
 
 	//! Reset DAC. See datasheet for details.
+	/*!
+		Note, this also resets the max/min values.
+		
+		See: _max, _min, setMaxDAC, setMinDAC, setMaxVoltage, setMinVoltage
+	*/
 	void reset();
 	
 	//! assert ~CLR. See datasheet for details.
@@ -329,13 +497,37 @@ class AD536x
 	*/
 	void writeGlobalOffset(AD536x_bank_t bank, unsigned int data);
 
-	//! Read local value for global offset.
+	//! Get local value for global offset.
 	/*!
 		bank: BANK0 or BANK1
 		
 		returns 14-bit offset word.
 	*/
-	unsigned int readGloablOffset(AD536x_bank_t bank);
+	unsigned int getGlobalOffset(AD536x_bank_t bank);
+
+
+	//! Informs library about the global reference voltage for a given bank.
+	/*!
+		bank: BANK0 or BANK1
+		voltage: double-precision voltage value
+		
+		Defaults to 5.0 volts. This is only used by the library to calculate
+		voltage <-> DAC tuning word conversions.
+		
+		See: getGlobalVref
+	*/
+	void setGlobalVref(AD536x_bank_t bank, double voltage);
+
+
+	//! Get internally set reference voltage for a given bank.
+	/*!
+		bank: BANK0 or BANK1
+		
+		Gets internally stored vref value for given bank.
+		
+		See: setGlobalVref
+	*/
+	double getGlobalVref(AD536x_bank_t bank);
 
 
 	//! Write an arbitrary command. 
@@ -352,8 +544,7 @@ class AD536x
   
   	//! DAC values
   	unsigned int _dac[2][AD536x_MAX_CHANNELS];
-  
-  	
+
   	//! Offset trim code array. First index is bank, second index is channel.
   	unsigned int _offset[2][AD536x_MAX_CHANNELS];
   	
@@ -364,7 +555,18 @@ class AD536x
   	unsigned int _globalOffset[2];
   	
   	//! Vref for each bank.
+  	/*!
+  		defaults to 5.0 volts.
+  		
+  		See: setGlobalVref
+  	*/
   	double _vref[2];
+  	
+  	//! Maximum allowed DAC values
+  	unsigned int _max[2][AD536x_MAX_CHANNELS];
+  	
+  	//! Minimum allowed DAC values
+  	unsigned int _min[2][AD536x_MAX_CHANNELS];
   	
   	//! Private implementation to write DAC registers.
   	/*!
@@ -385,14 +587,39 @@ class AD536x
 		VOUT = 4*VREF*(DAC_CODE/2^16 - OFFSET_CODE/2^14)
   		DAC_CODE = data*(M+1)/2^16 + (C - 2^15)
   		
-  		
-  		
-  		See: writeDAC, writeOffset, writeGain
+  		See: writeDAC, writeOffset, writeGain, setVoltage
 	*/
 	unsigned int voltageToDAC(AD536x_bank_t bank, AD536x_ch_t ch, double voltage);
+	
+	//! Calculate a voltage based on a DAC tuning word
+	/*!
+		Uses the transfer function:
+				
+		VOUT = 4*VREF*(DAC_CODE/2^16 - OFFSET_CODE/2^14)
+  		DAC_CODE = data*(M+1)/2^16 + (C - 2^15)
+  		
+  		See: writeDAC, writeOffset, writeGain, setVoltage
+  	*/
+	double dacToVoltage(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data);
   
+  	//! Validates new DAC value against _max and _min for given channel.
+  	/*!
+  		bank: BANK0, BANK1, or BANKALL
+  		ch: CH0 .. CH7 (or .. CH3), or CHALL for all channels.
+  		data: DAC value.
+  		
+  		Returns 1 if valid, 0 if invalid (outside range).
+  		
+  		Note, validation must be turned on by defining AD536x_VALIDATE
+  		before including the AD536x library, eg,
+  		
+  			#define AD536x_VALIDATE
+  			#include "AD536x.h"
+  	*/
+  	int validateData(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data);
   
 };
 
-#endif
 
+
+#endif
