@@ -396,7 +396,7 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 	AD536x::writeCommand(cmd);
 }
 
-//fix...
+//fix...doesn't handle 14-bit transfer function!!!!!
 unsigned int AD536x::voltageToDAC(AD536x_bank_t bank, AD536x_ch_t ch, double voltage){
 	  
 	/* 	
@@ -413,12 +413,24 @@ unsigned int AD536x::voltageToDAC(AD536x_bank_t bank, AD536x_ch_t ch, double vol
 	
 	//dac_code = (unsigned int)(voltage/(4*_vref[bank])
 	*/
-	return 0;
+	double mm = (double)(_gain[bank][ch] + 1)/pow(2,16);
+	double cc = (double) _offset[bank][ch] - 0x8000;
+	double d = voltage*pow(2,16)/(4*_vref[bank]) + 4*(double)_offset[bank][ch];
+	unsigned int data = (unsigned int)((d - cc)/mm);
+	return data;
 
 }
 
+// doesn't handle 14-bit transfer function!!!!!
 double AD536x::dacToVoltage(AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data){
-	return 0.0;
+	//double dd = (double) data;
+	// better way to do this...???
+	double mm = ((double)_gain[bank][ch] + 1)/pow(2, 16);
+	double dd = ((double)data * mm) + (double) _offset[bank][ch] - 0x8000;
+	
+	double vout = 4*_vref[bank]*dd/pow(2, 16) - ((double)_globalOffset[bank]/pow(2, 16));
+	
+	return vout;
 }
 
 
