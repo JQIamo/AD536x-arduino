@@ -29,11 +29,11 @@
 // some parameters related to the particular hardware implementation
 
 //The physical pin used to enable the SPI device
-#define SPI_DEVICE 4
+//#define SPI_DEVICE 4
 
 //The clock frequency for the SPI interface
-#define AD536x_CLOCK_DIVIDER_WR SPI_CLOCK_DIV2
-#define AD536x_CLOCK_DIVIDER_RD SPI_CLOCK_DIV4 //that (Assuming and Arduino clocked at 80MHz will set the clock of the SPI to 20 MHz
+//#define AD536x_CLOCK_DIVIDER_WR SPI_CLOCK_DIV2
+//#define AD536x_CLOCK_DIVIDER_RD SPI_CLOCK_DIV4 //that (Assuming and Arduino clocked at 80MHz will set the clock of the SPI to 20 MHz
 											   //AD536x can operate to up to 50 MHz for write operations and 20MHz for read operations.
 
 
@@ -46,7 +46,7 @@ AD536x::AD536x(int cs, int clr, int ldac, int reset)
 	_clr = clr;
 	_ldac = ldac;
 	_reset = reset;
-	
+	/*
 	// make pins output, and initialize to startup state
 	pinMode(_sync, OUTPUT);
 	pinMode(_clr, OUTPUT);
@@ -65,7 +65,7 @@ AD536x::AD536x(int cs, int clr, int ldac, int reset)
 	// want to do this better long-term; AD536x can handle 50MHz clock though.
 	SPI.setClockDivider(SPI_CLOCK_DIV2);
     SPI.setBitOrder(MSBFIRST);
-  	SPI.setDataMode(SPI_MODE0);
+  	SPI.setDataMode(SPI_MODE1);*/
 
 }
 
@@ -171,7 +171,7 @@ void AD536x::assertClear(int state){
 void AD536x::writeGlobalOffset(AD536x_bank_t bank, unsigned int data){
 	
 	unsigned long cmd = 0;
-	data = data && 0x3FFF; 	// 14-bit mask
+	data = data & 0x3FFF; 	// 14-bit mask
 	switch (bank) {
 		case BANK0:
 			cmd = (cmd | AD536x_WRITE_OFS0 | data);
@@ -187,10 +187,11 @@ void AD536x::writeGlobalOffset(AD536x_bank_t bank, unsigned int data){
 	}
 			
 	
-	// assert clear while adjusting range to avoid glitches, see datasheet
-	AD536x::assertClear(0);
+	// Make sure you assert clear while adjusting range to avoid glitches, see datasheet
+	// AD536x::assertClear(0);
 	AD536x::writeCommand(cmd);
-	AD536x::assertClear(1);
+	
+	//AD536x::assertClear(1);
 
 }
 
@@ -199,11 +200,11 @@ void AD536x::writeGlobalOffset(AD536x_bank_t bank, unsigned int data){
 void AD536x::writeCommand(unsigned long cmd){
 
 	digitalWrite(_sync, LOW);
-
+	
 	// write MSBFIRST
-	SPI.transfer((cmd >> 16) && 0xFF);
-	SPI.transfer((cmd >> 8) && 0xFF);
-	SPI.transfer(cmd && 0xFF);
+	SPI.transfer((cmd >> 16) & 0xFF);
+	SPI.transfer((cmd >> 8) & 0xFF);
+	SPI.transfer(cmd & 0xFF);
 	
 	digitalWrite(_sync, HIGH);
 }
@@ -216,11 +217,13 @@ void AD536x::writeCommand(unsigned long cmd){
 
 void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data){
 
-	data = data && AD536x_DATA_MASK; 	// bitmask ensure data has proper 
+	data = data & AD536x_DATA_MASK; 	// bitmask ensure data has proper 
 									 	// resolution
 	// pointer for where to store channel data 
 	// for reference.
 	// see: http://stackoverflow.com/questions/21488179/c-how-to-declare-pointer-to-2d-array
+	
+
 	unsigned int  (*localData)[2][AD536x_MAX_CHANNELS]; 	
 								
 	
@@ -246,6 +249,8 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 			// might want to notify user...???
 			return;
 	}
+	
+	
 
 
 	// check to make sure channel in range, if not, return early.
@@ -253,12 +258,14 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 		return;
 	}
 	
+	
 	if (ch == CHALL){
 		// if writing all channels, figure out which bank to address
 		// and update local reference data.
 		switch (bank){
 			case BANK0:
 				cmd = cmd | AD536x_ALL_BANK0;
+				Serial.println("here");
 				for (int c = 0; c < AD536x_MAX_CHANNELS; c++){
 					(*localData)[0][c] = data;
 				}
