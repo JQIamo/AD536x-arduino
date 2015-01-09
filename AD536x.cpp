@@ -259,11 +259,19 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 
 	data = data & AD536x_DATA_MASK; 	// bitmask ensure data has proper 
 									 	// resolution
+	
+	unsigned int payload;
+	
+	// if 14 bit DAC, coerce to right form
+	#ifdef AD536x_14BIT
+		payload = (data << 2) & 0xFFFF;
+	#else
+		payload = data;
+	#endif
+	
 	// pointer for where to store channel data 
 	// for reference.
 	// see: http://stackoverflow.com/questions/21488179/c-how-to-declare-pointer-to-2d-array
-	
-
 	unsigned int  (*localData)[2][AD536x_MAX_CHANNELS]; 	
 								
 	
@@ -274,7 +282,6 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 	// (in the sense that it's too costly)		
 	#ifdef AD536x_VALIDATE
 		bool singleCh = false;
-		camasdf = 0;
 	#endif
 	
 	
@@ -348,7 +355,7 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 				cmd = cmd | AD536x_BANK0 | (ch << 16);
 				(*localData)[0][ch] = data;
 				
-				#ifdef AD536x_VALIDATE_ON
+				#ifdef AD536x_VALIDATE
 					singleCh = true;
 				#endif
 				
@@ -358,7 +365,7 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 				cmd = cmd | AD536x_BANK1 | (ch << 16);
 				(*localData)[1][ch] = data;
 				
-				#ifdef AD536x_VALIDATE_ON
+				#ifdef AD536x_VALIDATE
 					singleCh = true;
 				#endif
 				
@@ -371,7 +378,7 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 		}
 	}
 	
-	#ifdef AD536x_VALIDATE_ON
+	#ifdef AD536x_VALIDATE
 		// if writing a single channel, validate your data.
 		if(singleCh){
 			int valid = AD536x::validateData(bank, ch, data);
@@ -385,7 +392,7 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 	#endif
 	 
 	// update command with data packet, and write to dac.
-	cmd = cmd | data;
+	cmd = cmd | payload;
 	AD536x::writeCommand(cmd);
 }
 

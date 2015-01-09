@@ -38,6 +38,7 @@
 // include types & constants of Wiring core API
 #include "Arduino.h"
 #include "SPI.h"
+#include "settings.h"
 
 
 	// note, in 2x banks
@@ -76,9 +77,10 @@
 /*
 #define AD536x_MODEL 2	// Defaults to AD5362
 #endif
+*/
 
 //! AD5360 DAC
-#if AD536x_MODEL == 0
+#ifdef AD536x_AD5360
 	// note, in 2x banks
 	#define AD536x_MAX_CHANNELS 8
 	#define AD536x_RESOLUTION 16
@@ -95,12 +97,13 @@
 #endif
 
 //! AD5361 DAC
-#if AD536x_MODEL == 1
+#ifdef AD536x_AD5361
 	// note, in 2x banks
 	#define AD536x_MAX_CHANNELS 8
 	#define AD536x_RESOLUTION 14
 	#define AD536x_DATA_MASK 0x3FFF
 	#define AD536x_CH_MASK 0x07
+	#define AD536x_14BIT
 	
 	#define AD536x_DEFAULT_DAC 0x2000
 	#define AD536x_DEFAULT_OFFSET 0x2000
@@ -112,7 +115,7 @@
 #endif
 
 //! AD5362 DAC
-#if AD536x_MODEL == 2
+#ifdef AD536x_AD5362
 	// note, in 2x banks
 	#define AD536x_MAX_CHANNELS 4
 	#define AD536x_RESOLUTION 16
@@ -129,12 +132,13 @@
 #endif
 
 //! AD5363 DAC
-#if AD536x_MODEL == 3
+#ifdef AD536x_AD5363
 	// note, in 2x banks
 	#define AD536x_MAX_CHANNELS 4
 	#define AD536x_RESOLUTION 14
 	#define AD536x_DATA_MASK 0x3FFF
 	#define AD536x_CH_MASK 0x03
+	#define AD536x_14BIT
 	
 	#define AD536x_DEFAULT_DAC 0x2000
 	#define AD536x_DEFAULT_OFFSET 0x2000
@@ -145,7 +149,6 @@
 	#define AD536x_DEFAULT_MIN 0x0000
 #endif
 
-*/
 
 
 //Definition of constants and AD536x registers
