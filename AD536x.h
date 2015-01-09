@@ -60,10 +60,13 @@ M1	M0	A5	A4	A3	A2	A1	A0	D15	D14	D13	D12	D11 D10 D9	D8	D7	D6	D5	D4	D3	D2	D1(0)	D0
 */
 
 // first two control bits M1, M0
+// NOTE: since int type (default interpretation of, eg, "3" << 22) is 16 bit in ATMEGA chips, make sure
+// you explicitly indicate unsigned long by 3UL (unsigned long is 32-bit variable type). Otherwise,
+// Bad Things (TM).
 #define AD536x_SPECIAL_FUNCTION 0
-#define	AD536x_WRITE_DAC 		3<<22
-#define AD536x_WRITE_OFFSET 	2<<22
-#define	AD536x_WRITE_GAIN 		1<<22
+#define	AD536x_WRITE_DAC 		3UL << 22
+#define AD536x_WRITE_OFFSET 	2UL << 22
+#define	AD536x_WRITE_GAIN 		1UL << 22
 
 //Then I will define constats used to generate the address or the special codes.
 
@@ -79,25 +82,25 @@ M1	M0	A5	A4	A3	A2	A1	A0	D15	D14	D13	D12	D11 D10 D9	D8	D7	D6	D5	D4	D3	D2	D1(0)	D0
 		| 10 -- Bank 1	|	dac #, bank 1
 */
 
-#define AD536x_BANK0		1 << 19
-#define AD536x_BANK1		2 << 19
+#define AD536x_BANK0		1UL << 19
+#define AD536x_BANK1		2UL << 19
 #define AD536x_ALL_DACS		0
-#define AD536x_ALL_BANK0	1 << 16
-#define AD536x_ALL_BANK1	2 << 16
+#define AD536x_ALL_BANK0	1UL << 16
+#define AD536x_ALL_BANK1	2UL << 16
 
 
 // alternative format for addressing bank 1 or 0
-#define AD536x_BANK(bank)   (bank+1)<<19
+#define AD536x_BANK(bank)   (bank+1)UL << 19
 
 // specific channel, if desired.
 #define AD546x_CH0		0
-#define AD546x_CH1		1<<16
-#define AD546x_CH2		2<<16
-#define AD546x_CH3		3<<16
-#define AD546x_CH4		4<<16
-#define AD546x_CH5		5<<16
-#define AD546x_CH6		6<<16
-#define AD546x_CH7		7<<16
+#define AD546x_CH1		1UL << 16
+#define AD546x_CH2		2UL << 16
+#define AD546x_CH3		3UL << 16
+#define AD546x_CH4		4UL << 16
+#define AD546x_CH5		5UL << 16
+#define AD546x_CH6		6UL << 16
+#define AD546x_CH7		7UL << 16
 
 // When AD536x_SPECIAL_FUNCTION is used it is possibile to give complex commands
 // including reading from registers!
@@ -107,7 +110,7 @@ M1	M0	A5	A4	A3	A2	A1	A0	D15	D14	D13	D12	D11 D10 D9	D8	D7	D6	D5	D4	D3	D2	D1(0)	D0
 //  0	 0	S5	S4	S3	S2	S1	S0	F15	F14	F13	F12	F11 F10 F9	F8	F7	F6	F5	F4	F3	F2	F1	F0
 
 #define AD536x_NOP	0
-#define AD536x_WR_CR 1<<15 //Write on control register
+#define AD536x_WR_CR 1UL << 15 //Write on control register
 	//Let's set the FLAGS for the control register
 	//Flags can be combined!!!
 	#define AD536x_X1B 4
@@ -116,33 +119,36 @@ M1	M0	A5	A4	A3	A2	A1	A0	D15	D14	D13	D12	D11 D10 D9	D8	D7	D6	D5	D4	D3	D2	D1(0)	D0
 	#define AD536x_T_SHTDWN_DIS 0	
 	#define AD536x_SOFT_PWR_UP 1	
 	#define AD536x_SOFT_PWR_DWN 0	
-#define AD536x_WRITE_OFS0 2<<15 //Writes in the OFFSET 0 ANALOG DAC. the data is a 14 bit variable
-#define AD536x_WRITE_OFS1 3<<15 //Writes in the OFFSET 1 ANALOG DAC. the data is a 14 bit variable
-#define AD536x_READ_REG 5<<15 //Select which register to read
+#define AD536x_WRITE_OFS0 2UL << 16 //Writes in the OFFSET 0 ANALOG DAC. the data is a 14 bit variable
+#define AD536x_WRITE_OFS1 3UL << 16 //Writes in the OFFSET 1 ANALOG DAC. the data is a 14 bit variable
+
+
+// these all might be wrong..... check bit shifts before using!!
+#define AD536x_READ_REG 5UL << 15 //Select which register to read
 	//This is the set of commends that select a particular register
 	#define AD536x_READ_X1A(channel) 0|(channel+8)<<6
-	#define AD536x_READ_X1B(channel) (1<<12)|(channel+8)<<6
-	#define AD536x_READ_C(channel) (2<<12)|(channel+8)<<6
-	#define AD536x_READ_M(channel) (3<<12)|(channel+8)<<6
-	#define AD536x_READ_CR (3<<12)|(1<<6) //Read the control register: my favorite!
+	#define AD536x_READ_X1B(channel) (1UL << 12)|(channel+8)UL << 6
+	#define AD536x_READ_C(channel) (2UL << 12)|(channel+8)UL << 6
+	#define AD536x_READ_M(channel) (3UL << 12)|(channel+8)UL << 6
+	#define AD536x_READ_CR (3UL << 12)|(1UL << 6) //Read the control register: my favorite!
 		//Flags defined for register Writing can be used for interrogation of the state
 		//In addition the following flags can be used for read-only interrogations
 		#define AD536x_CR_OVERTEMP 16 
 		#define AD536x_CR_PEC 8
-	#define AD536x_READ_OFS0 (3<<12)|(2<<6)						 
-	#define AD536x_READ_OFS1 (3<<12)|(3<<6)							 
-	#define AD536x_READ_AB_0 (3<<12)|(6<<6)
-	#define AD536x_READ_AB_1 (3<<12)|(7<<6)	 
-	#define AD536x_READ_GPIO (3<<12)|(11<<6) //F6 to F0 SHOULD be 0
-#define AD536x_WR_AB_SELECT_0 6<<15 //F7 to F0 select registers X2A or X2B for bank 0 A is0 and B is 1
-#define AD536x_WR_AB_SELECT_0 11<<15 //F7 to F0 select registers X2A or X2B for bank 0 A is0 and B is 1
-#define AD536x_BLOCK_WR_AB_SELECT 19<<15 //Block write AB
-#define AD536x_MON 			12<<15 //Additional monitor commands specified below
-	#define AD536x_CMD_MON_ENABLE 1<<4
-	#define AD536x_CMD_MON_DISABLE 1<<4
-	#define AD536x_CMD_MON_IN_PIN_SEL(pin) (1<<4)|pin // pin can be 0 or 1 and selects the input pin from MON_IN0 or MON_IN1								 
+	#define AD536x_READ_OFS0 (3UL << 12)|(2UL << 6)						 
+	#define AD536x_READ_OFS1 (3UL << 12)|(3UL << 6)							 
+	#define AD536x_READ_AB_0 (3UL << 12)|(6UL << 6)
+	#define AD536x_READ_AB_1 (3UL << 12)|(7UL << 6)	 
+	#define AD536x_READ_GPIO (3UL << 12)|(11UL << 6) //F6 to F0 SHOULD be 0
+#define AD536x_WR_AB_SELECT_0 6UL << 15 //F7 to F0 select registers X2A or X2B for bank 0 A is0 and B is 1
+#define AD536x_WR_AB_SELECT_0 11UL << 15 //F7 to F0 select registers X2A or X2B for bank 0 A is0 and B is 1
+#define AD536x_BLOCK_WR_AB_SELECT 19UL << 15 //Block write AB
+#define AD536x_MON 			12UL << 15 //Additional monitor commands specified below
+	#define AD536x_CMD_MON_ENABLE 1UL << 4
+	#define AD536x_CMD_MON_DISABLE 1UL << 4
+	#define AD536x_CMD_MON_IN_PIN_SEL(pin) (1UL << 4)|pin // pin can be 0 or 1 and selects the input pin from MON_IN0 or MON_IN1								 
 	#define AD536x_CMD_MON_DAC_CH_SEL(channel) channel // F3:F0 selects the input channel. If a number greater than 15 is used will cause errors!
-#define	AD536x_WR_GPIO 13<<15 //F1=1 sets the GPIO as output F1=0 sets GPIO as input F0 contains the status.
+#define	AD536x_WR_GPIO 13UL << 15 //F1=1 sets the GPIO as output F1=0 sets GPIO as input F0 contains the status.
 
 
 // register types
@@ -303,6 +309,21 @@ class AD536x
 		
 		bank: BANK0 or BANK1
 		data: 14-bit offset word
+		
+		When you write the global offset for a given bank, make
+		sure to call assertClear before doing so, as per datasheet.
+		
+		For example, to re-zero the DAC to unipolar output, do 
+		something like
+		
+		dac.assertClear(0);
+		dac.writeGlobalOffset(BANK0, 0x00);
+		dac.writeDAC(BANK0, CHALL, 0x00);
+		dac.assertClear(1);
+		
+		This way, you don't glitch to the (non-zero) default DAC code, 
+		and instead stay at zero potential until you're ready to update
+		with a new value.
 		
 		See datasheet for more info.
 	*/
