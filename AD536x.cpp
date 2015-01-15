@@ -54,7 +54,7 @@ AD536x::AD536x(int cs, int clr, int ldac, int reset)
 	
 
 	
-	/*
+
 	// make pins output, and initialize to startup state
 	pinMode(_sync, OUTPUT);
 	pinMode(_clr, OUTPUT);
@@ -67,7 +67,7 @@ AD536x::AD536x(int cs, int clr, int ldac, int reset)
 	digitalWrite(_reset, HIGH);
 	
 	AD536x::reset();
-	
+/*	
 	SPI.begin();
 	
 	// want to do this better long-term; AD536x can handle 50MHz clock though.
@@ -203,7 +203,6 @@ void AD536x::writeGlobalOffset(AD536x_bank_t bank, unsigned int data){
 			return;
 	}
 			
-	
 	// Make sure you assert clear while adjusting range to avoid glitches
 	// see datasheet
 	
@@ -242,6 +241,7 @@ void AD536x::writeCommand(unsigned long cmd){
 	digitalWrite(_sync, LOW);
 	
 	// write MSBFIRST
+	
 	SPI.transfer((cmd >> 16) & 0xFF);
 	SPI.transfer((cmd >> 8) & 0xFF);
 	SPI.transfer(cmd & 0xFF);
@@ -256,11 +256,10 @@ void AD536x::writeCommand(unsigned long cmd){
 
 
 void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigned int data){
-
 	data = data & AD536x_DATA_MASK; 	// bitmask ensure data has proper 
 									 	// resolution
-	
 	unsigned int payload;
+	
 	
 	// if 14 bit DAC, coerce to right form
 	#ifdef AD536x_14BIT
@@ -352,7 +351,7 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 		// else, write particular bank/channel
 		switch (bank){
 			case BANK0:
-				cmd = cmd | AD536x_BANK0 | (ch << 16);
+				cmd = cmd | AD536x_BANK0 | ((unsigned long)ch << 16);
 				(*localData)[0][ch] = data;
 				
 				#ifdef AD536x_VALIDATE
@@ -362,7 +361,7 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 				break;
 			
 			case BANK1:
-				cmd = cmd | AD536x_BANK1 | (ch << 16);
+				cmd = cmd | AD536x_BANK1 | ((unsigned long) ch << 16);
 				(*localData)[1][ch] = data;
 				
 				#ifdef AD536x_VALIDATE
@@ -390,7 +389,6 @@ void AD536x::write(AD536x_reg_t reg, AD536x_bank_t bank, AD536x_ch_t ch, unsigne
 			}
 		}
 	#endif
-	 
 	// update command with data packet, and write to dac.
 	cmd = cmd | payload;
 	AD536x::writeCommand(cmd);
